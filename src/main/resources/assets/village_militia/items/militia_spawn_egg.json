@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "village_militia:item/militia_spawn_egg"
+  }
+}

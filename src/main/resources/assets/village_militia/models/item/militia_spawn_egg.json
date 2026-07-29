@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "village_militia:item/militia_spawn_egg"
+  }
+}
