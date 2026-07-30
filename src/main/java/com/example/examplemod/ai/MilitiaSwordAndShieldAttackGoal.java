@@ -61,7 +61,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
         LivingEntity target = this.mob.getTarget();
         if (target == null) return;
 
-        // 1. 視線鎖定（無論如何，眼睛盯著怪）
+        // 1. 視線鎖定（眼睛盯著怪）
         this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         double distanceSq = this.mob.distanceToSqr(target);
@@ -74,12 +74,12 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
        
         boolean isRiding = this.mob.isPassenger() && this.mob.getVehicle() instanceof net.minecraft.world.entity.PathfinderMob;
 
-        //  戰鬥拉扯狀態
+       
         if (this.retreatTicks > 0) {
             this.retreatTicks--;
 
             if (isRiding) {
-                //  騎兵撤退：戰馬調頭全速奔跑（此時不舉盾，專心控馬）
+                //  騎兵撤退
                 net.minecraft.world.entity.PathfinderMob vehicleMob = (net.minecraft.world.entity.PathfinderMob) this.mob.getVehicle();
                 net.minecraft.world.phys.Vec3 retreatPos = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosAway(
                     vehicleMob, 8, 4, target.position()
@@ -110,7 +110,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     this.mob.hurtMarked = true;
                 }
 
-                // 🏃‍♂️ 步兵步行的舊邏輯：後退快結束時舉盾準備接階段 2
+               
                 if (this.retreatTicks <= 3 && !this.mob.isUsingItem() && this.mob.getOffhandItem().is(Items.SHIELD)) {
                     this.mob.startUsingItem(InteractionHand.OFF_HAND);
                     this.shieldTicks = 10 + this.mob.getRandom().nextInt(20);; 
@@ -136,9 +136,9 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
         } else {
             if (isRiding) {
                 net.minecraft.world.entity.PathfinderMob vehicleMob = (net.minecraft.world.entity.PathfinderMob) this.mob.getVehicle();
-                vehicleMob.getNavigation().moveTo(target, 1.8D);
+                vehicleMob.getNavigation().moveTo(target, 1.6D);
             } else {
-                // 🏃‍♂️ 步兵衝鋒
+                //  步兵衝鋒
                 this.mob.getNavigation().moveTo(target, 0.85D);
             }
             
@@ -161,11 +161,11 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
 
                 if (isRiding) {
                     if (this.mob.getRandom().nextBoolean()) {
-                        // 戰術 A：只撤退，不舉盾
+                        // 戰術 A
                         this.retreatTicks = 15 + this.mob.getRandom().nextInt(10); ; 
                         this.shieldTicks = 0;
                     } else {
-                        // 戰術 B：只舉盾，不撤退
+                        // 戰術 B
                         if (this.mob.getOffhandItem().is(Items.SHIELD)) {
                             this.mob.startUsingItem(InteractionHand.OFF_HAND);
                             this.shieldTicks = 20; // 舉盾 1 秒
@@ -173,12 +173,12 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                         this.retreatTicks = 0;
                     }
                 } else {
-                    // 🏃‍♂️ 步兵維持原樣
+                    // 🏃步兵維持原樣
                     if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
-                        // 長槍兵戳完後只進行短暫的微調（3-7 tick），保留更多衝鋒衝勁
+                      
                         this.retreatTicks = 3 + this.mob.getRandom().nextInt(25);
                     } else {
-                        // 鐵劍兵維持原有的長時間撤退與舉盾準備
+                        
                         this.retreatTicks = 1 + this.mob.getRandom().nextInt(20);
                     }
                     this.shieldTicks = 0;

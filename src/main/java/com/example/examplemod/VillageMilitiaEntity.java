@@ -1,14 +1,11 @@
 package com.example.examplemod;
-import java.util.function.Predicate;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.Display.TextDisplay;
+
 import com.example.examplemod.ai.MilitiaBowRetreatGoal;
 import com.example.examplemod.ai.MilitiaReturnToGuardGoal;
 import com.example.examplemod.ai.MilitiaAreaPatrolGoal;
 import com.example.examplemod.ai.MilitiaAttackTargetGoal;
+import com.example.examplemod.ai. MilitiaSpearWithoutShieldGoal ;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -16,12 +13,11 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.golem.IronGolem;
+
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+
 
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -37,13 +33,11 @@ import net.minecraft.world.item.ShieldItem;
 import com.example.examplemod.ai.MilitiaFollowOwnerGoal;
 import com.example.examplemod.ai.MilitiaSwordAndShieldAttackGoal;
 import com.example.examplemod.ai.MilitiaCrossbowRetreatGoal;
-import java.util.List;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
+
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -59,8 +53,6 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
-import java.lang.reflect.Method;
-
 
 
 public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttackMob, InventoryCarrier{
@@ -69,10 +61,10 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     private BlockPos guardPos = null;
 
     public enum MilitiaMode {
-        PATROL,  // 1. 巡邏模式：像 Ghast 一樣在指定範圍內隨機漫遊 (例如 16x16 範圍)
-        GUARD,   // 2. 守衛模式：停在定點不動，戰鬥完會自動回歸原點
-        FOLLOW,  // 3. 跟隨模式：跟隨玩家/隊長
-        IDLE     // 4. 一般模式：原本 Village/Vanilla 邏輯（在村莊隨機漫遊）
+        PATROL,  
+        GUARD,   
+        FOLLOW, 
+        IDLE    
     }
     
 
@@ -89,22 +81,17 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         // Priority 1 & 2: 戰鬥相關走位與攻擊 AI
         this.goalSelector.addGoal(1, new MilitiaBowRetreatGoal(this));
         this.goalSelector.addGoal(2, new MilitiaCrossbowRetreatGoal(this));
+        this.goalSelector.addGoal(2, new  MilitiaSpearWithoutShieldGoal<>(this, 0.9, 1.0, 10.0F, 2.0F));
         this.goalSelector.addGoal(2, new MilitiaSwordAndShieldAttackGoal(this));
 
         // =========================================================
         //  模式專屬 AI 邏輯 (Priority 2 ~ 5)
         // =========================================================
         
-        // 1. GUARD 模式：戰鬥結束或偏離時自動返回守衛點
+       
         this.goalSelector.addGoal(2, new MilitiaReturnToGuardGoal(this, 0.4D));
-
-        // 2. FOLLOW 模式：跟隨玩家 (僅在 Mode == FOLLOW 觸發)
         this.goalSelector.addGoal(3, new MilitiaFollowOwnerGoal(this, 0.7D, 3.0F, 10.0F));
-
-        // 3. PATROL 模式：以守衛點/當前點為中心在一定範圍內漫遊 (僅在 Mode == PATROL 觸發)
         this.goalSelector.addGoal(4, new MilitiaAreaPatrolGoal(this, 0.5D));
-
-        // 4. IDLE 模式：原本村莊漫遊邏輯 (僅在 Mode == IDLE 時啟用)
         this.goalSelector.addGoal(4, new MoveThroughVillageGoal(this, 0.5D, false, 4, () -> false) {
             @Override
             public boolean canUse() {
@@ -129,6 +116,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         // Priority 5: 閒置觀察
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        
     }
 
     private static final EntityDataAccessor<Boolean> IS_CHARGING_CROSSBOW = 
@@ -185,14 +173,11 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-
-        // 1. 讀取民兵模式，讀不到就設為預設值 IDLE
         int modeOrdinal = input.read("MilitiaMode", com.mojang.serialization.Codec.INT).orElse(MilitiaMode.IDLE.ordinal());
         if (modeOrdinal >= 0 && modeOrdinal < MilitiaMode.values().length) {
             this.setMilitiaMode(MilitiaMode.values()[modeOrdinal]);
         }
 
-        // 2. 讀取 Guard 座標
         input.read("GuardPos", net.minecraft.core.BlockPos.CODEC).ifPresent(pos -> {
             this.guardPos = pos;
         });
@@ -227,7 +212,6 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
 
     @Override
     public void performRangedAttack(LivingEntity target, float distanceFactor) {
-        // 呼叫 CrossbowAttackMob 預設的弩箭發射邏輯 (1.6F 為射擊速度/力量)
         this.performCrossbowAttack(this, 1.6F);
     }
 
@@ -283,7 +267,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         if (target instanceof VillageMilitiaEntity ) {
             return; 
         }
-        super.setTarget(target); // 其他怪物（殭屍等）正常鎖定
+        super.setTarget(target); 
     }
 
     @Override
@@ -318,7 +302,6 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
 
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
-        // 呼叫父類別執行真正的扣血與受傷處理
         boolean wasHurt = super.hurtServer(level, source, amount);
 
         // 如果成功造成傷害，且攻擊者是玩家（近戰或遠程）
@@ -327,11 +310,11 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
                 level.sendParticles(
                     ParticleTypes.ANGRY_VILLAGER,
                     this.getX(), 
-                    this.getEyeY() + 0.5D, // 頭頂位置
+                    this.getEyeY() + 0.5D, 
                     this.getZ(),
-                    5,                     // 數量
-                    0.25D, 0.25D, 0.25D,   // 擴散範圍
-                    0.02D                  // 飄散速度
+                    5,                    
+                    0.25D, 0.25D, 0.25D,  
+                    0.02D                  
                 );
             }
         }
@@ -345,18 +328,17 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
 public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
     ItemStack itemInHand = player.getItemInHand(hand);
 
-    // 1. 戰鬥中不互動
+    // 戰鬥中不互動
     if (this.getTarget() != null && this.getTarget().isAlive()) {
         return InteractionResult.PASS;
     }
 
-    // 2. 🎯【核心修復】：只要是 Shift + 右鍵，且手持裝備/綠寶石/木棒，Client 端第一時間截斷！
-    // 這樣客戶端就不會去觸發 Equippable (玩家自己穿裝) 的原版邏輯
+   
     if (player.isShiftKeyDown()) {
 
         // --- Client 端處理 ---
         if (this.level().isClientSide()) {
-            // 如果手上有東西（或是符合你的互動物品），直接回傳 SUCCESS_SERVER 截斷客戶端穿裝
+            
             if (!itemInHand.isEmpty() || this.isPassenger()) {
                 return InteractionResult.SUCCESS_SERVER;
             }
@@ -434,7 +416,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             } 
 
             // =========================================================
-            // C. 一般物品 + Shift + 右鍵：單件裝備替換邏輯
+            //  一般物品 + Shift + 右鍵：單件裝備替換邏輯
             // =========================================================
             else if (!itemInHand.isEmpty()) {
                 EquipmentSlot slotToEquip = null;
@@ -518,10 +500,9 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 }
             }
 
-            // 2. 🌟【重裝戰馬騎乘與卸載邏輯】
+            // 【重裝戰馬騎乘與卸載邏輯】
             if (!this.isPassenger()) {
                 // =================【 上馬邏輯 】=================
-                //  每 20 ticks (1秒) 檢查一次周圍
                 if (this.tickCount - this.lastHorseCheckTick >= 35) {
                     this.lastHorseCheckTick = this.tickCount;
 
@@ -530,11 +511,8 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                         this.level().getEntitiesOfClass(net.minecraft.world.entity.animal.equine.Horse.class, checkArea);
 
                     for (net.minecraft.world.entity.animal.equine.Horse horse : nearbyHorses) {
-                        // 方案 C 核心判定：必須同時有馬鞍 (SADDLE) 和馬鎧 (BODY)
+                       
                         boolean hasSaddle = !horse.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.SADDLE).isEmpty();
-                        
-                        
-                        // 用 horse.getPassengers().isEmpty() 代替舊版的 hasNoPassengers()
                         boolean hasNoPassengers = horse.getPassengers().isEmpty();
 
                         if (horse.isAlive() && hasNoPassengers && hasSaddle  && !horse.isLeashed()) {
@@ -549,7 +527,6 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 if (this.getVehicle() instanceof net.minecraft.world.entity.animal.equine.Horse horse) {
                     if (this.tickCount % 20 == 0) {
                         if (!horse.isAlive()) {
-                            // 📯 民兵立刻跳下馬！
                             this.stopRiding();
                         }
                     }
@@ -581,7 +558,6 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
     public void rideTick() {
         super.rideTick();
         if (this.getVehicle() instanceof net.minecraft.world.entity.animal.equine.Horse) {
-            //  強行干預：把民兵目前的 Y 軸座標，直接往下移動 0.25 格，強行修正浮空！
             this.setPos(this.getX(), this.getY() - 0.60D, this.getZ());
         }
     }
@@ -592,10 +568,10 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
         if (id == 4) {
             if (this.level().isClientSide()) {
                 
-                this.stopUsingItem();      // 1. 強制解開舉盾/使用物品
-                this.swinging = true;      // 2. 強制設為正在揮手
-                this.swingTime = 0;       // 3. 強制將計時器歸位到 -1 (準備進入 0)
-                this.swingingArm = net.minecraft.world.InteractionHand.MAIN_HAND; // 4. 指定右手
+                this.stopUsingItem();      
+                this.swinging = true;     
+                this.swingTime = 0;       
+                this.swingingArm = net.minecraft.world.InteractionHand.MAIN_HAND; 
             }
         } else if (id == 5) {
             if (this.level().isClientSide()) {
@@ -610,21 +586,19 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
     }
     
     private void spawnFootParticles(ServerLevel level, SimpleParticleType particleType, int count) {
-    // 取得腳下的微小範圍
+   
         for (int i = 0; i < count; i++) {
-            // 在腳底周圍 0.4 格半徑微幅擴散
             double offsetX = (this.random.nextDouble() - 0.5D) * 0.8D;
             double offsetZ = (this.random.nextDouble() - 0.5D) * 0.8D;
             
-            // 速度微小，讓粒子優雅地飄浮在腳邊
             level.sendParticles(
                 particleType,
                 this.getX() + offsetX,
-                this.getY() + 0.1D, // 貼近腳底
+                this.getY() + 0.1D, 
                 this.getZ() + offsetZ,
-                1,                  // 每次生成數量
-                0.0D, 0.05D, 0.0D,  // XYZ 速度 (稍微向上飄出一點點)
-                0.02D               // 擴散速度
+                1,                  
+                0.0D, 0.05D, 0.0D,  
+                0.02D              
             );
         }
     }
@@ -634,11 +608,11 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
         super.tick();
 
         if (!this.level().isClientSide()) {
-            // 檢查手上拿的是不是弩
+            
             if (this.getMainHandItem().getItem() instanceof net.minecraft.world.item.CrossbowItem) {
-                // 如果 AI 正在讓它拉弦/換彈（isUsingItem）
+               
                 if (this.isUsingItem()) {
-                    // 強制讓碰撞箱與狀態切換為蹲姿
+                    
                     if (this.getPose() != net.minecraft.world.entity.Pose.CROUCHING) {
                         this.setPose(net.minecraft.world.entity.Pose.CROUCHING);
                         this.setShiftKeyDown(true);
@@ -659,16 +633,16 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
 
 
         if (!this.level().isClientSide()) {
-      // 1. 慶祝計時器倒數
+    
             if (isCelebrating()) {
                 this.celebrateTicks--;
                 if (this.celebrateTicks <= 0) {
                     setCelebrating(false);
                 }
             } 
-            // 2. 沒在慶祝時，才去檢查是否要觸發新的慶祝
+            
             else if (this.tickCount % 40 == 0 && isHeroNearby()) {
-                // 機率改為 1F (100%) 或你想要的數值
+               
                 if (this.random.nextFloat() < 1F) { 
                     setCelebrating(true);
                     this.celebrateTicks = 50; 
@@ -694,7 +668,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                         spawnFootParticles(serverLevel, ParticleTypes.GLOW, 1);
                     }
                     case IDLE -> {
-                        // IDLE 什麼都不做，保持乾淨
+                        // IDLE 什麼都不做，
                     }
                 }
             }
@@ -715,7 +689,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             ItemStack itemStack = this.getItemBySlot(slot);
             if (!itemStack.isEmpty()) {
                 this.spawnAtLocation(serverLevel, itemStack);
-                this.setItemSlot(slot, ItemStack.EMPTY); // 清空防止重複刷物
+                this.setItemSlot(slot, ItemStack.EMPTY); 
             }
         }
     }

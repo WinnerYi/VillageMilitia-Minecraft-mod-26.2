@@ -2,14 +2,9 @@ package com.example.examplemod.ai;
 import java.util.EnumSet;
 import com.example.examplemod.VillageMilitiaEntity;
 import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.monster.zombie.Zombie;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.raid.Raider;
-import java.util.EnumSet;
-import java.util.List;
-import net.minecraft.world.phys.AABB;
+
 
 public class MilitiaReturnToGuardGoal extends Goal {
     private final VillageMilitiaEntity mob;

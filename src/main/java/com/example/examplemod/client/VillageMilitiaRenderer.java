@@ -62,7 +62,7 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
         super.extractRenderState(entity, state, partialTick);
         state.isCelebrating = entity.isCelebrating();
         
-        // 攻擊/揮手動畫計算
+     
         if (entity.swinging) {
             float duration = (float) entity.getCurrentSwingDuration();
             if (duration <= 0.0F) duration = 6.0F;
@@ -73,13 +73,13 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
             state.attackTime = 0.0F;
         }
         
-        // 蹲下狀態修正
+        
         state.isCrouching = entity.isShiftKeyDown() || entity.getPose() == net.minecraft.world.entity.Pose.CROUCHING;
 
         // 讀取主手物品與敵對狀態
         ItemStack mainHand = entity.getMainHandItem();
         state.isHoldingCrossbow = mainHand.getItem() instanceof CrossbowItem;
-        state.isHoldingBow = mainHand.getItem() instanceof BowItem; // 🏹 檢查是否持弓
+        state.isHoldingBow = mainHand.getItem() instanceof BowItem; 
         state.isAggressive = entity.isAggressive() || entity.getTarget() != null;
 
         // ----------------------------------------------------
@@ -108,9 +108,9 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
                 }
             }
         } 
-        // 2. 🏹 弓（Bow）邏輯（關鍵新增區塊！）
+        
         else if (state.isHoldingBow) {
-            // 如果民兵正在使用物品（也就是在 AI 目錄裡執行了 startUsingItem）
+            
             if (entity.isUsingItem() && entity.getUseItem().getItem() instanceof BowItem) {
                 state.isUsingItem = true;
                 state.useItemHand = entity.getUsedItemHand();
@@ -118,7 +118,7 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
                 state.rightArmPose = HumanoidModel.ArmPose.BOW_AND_ARROW;
                 state.leftArmPose = HumanoidModel.ArmPose.BOW_AND_ARROW;
             } else {
-                // 平常沒在拉弓時：敵對狀態下拿著弓，普通時放鬆
+               
                 if (state.isAggressive) {
                     state.rightArmPose = HumanoidModel.ArmPose.ITEM;
                     state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
@@ -128,7 +128,30 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
                 }
             }
         } 
-        // 3. 近戰 / 其他武器邏輯
+
+        else if (mainHand.has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON) 
+                 && !entity.getOffhandItem().is(net.minecraft.world.item.Items.SHIELD)) {
+            
+           
+            if (entity.isUsingItem() && entity.getUseItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
+                state.isUsingItem = true;
+                state.useItemHand = entity.getUsedItemHand();
+                
+                state.rightArmPose = HumanoidModel.ArmPose.SPEAR; 
+                state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+            } 
+            // 敵對/警戒中
+            else if (state.isAggressive) {
+                state.rightArmPose = HumanoidModel.ArmPose.ITEM;
+                state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+            } 
+            // 平時放鬆
+            else {
+                state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+                state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+            }
+        }
+    
         else {
             if (state.attackTime > 0.0F) {
                 state.rightArmPose = HumanoidModel.ArmPose.EMPTY;

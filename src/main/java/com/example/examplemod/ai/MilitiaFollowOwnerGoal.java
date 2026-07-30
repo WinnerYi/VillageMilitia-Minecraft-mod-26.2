@@ -106,7 +106,7 @@ public class MilitiaFollowOwnerGoal extends Goal {
         if (--this.timeToRecalcPath <= 0) {
             this.timeToRecalcPath = this.adjustedTickDelay(10);
             
-            // 🎯 移除傳送判斷，單純靠 Navigation 讓民兵走/騎過去
+            // 單純靠 Navigation 讓民兵走/騎過去
             double currentSpeed = this.militia.isPassenger() ? this.speedModifier * 2.4D : this.speedModifier;
             this.moveMilitiaOrVehicle(currentSpeed);
         }
@@ -123,9 +123,8 @@ public class MilitiaFollowOwnerGoal extends Goal {
     }
 
     private LivingEntity getOwner() {
-        // 💡 如果 owner 距離超過 15 格，getNearestPlayer 就會回傳 null。
-        // 如果希望離很遠（例如 30 格外）民兵還是能感應到並走過去，可以把這裡的 15.0D 提高（例如 32.0D）
-        return this.militia.level().getNearestPlayer(this.militia, 32.0D);
+        // 如果 owner 距離超過 15 格，getNearestPlayer 就會回傳 null。
+        return this.militia.level().getNearestPlayer(this.militia, 25.0D);
     }
 
     // 已完全移除 teleportToOwner() 邏輯

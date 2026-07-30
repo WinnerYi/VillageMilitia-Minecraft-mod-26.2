@@ -4,11 +4,9 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MapColor;
@@ -23,7 +21,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -83,13 +80,11 @@ public class ExampleMod {
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        
-        
-        // ================== 【新增：將生怪蛋塞入原版「生成蛋」分頁】 ==================
+   
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(MILITIA_SPAWN_EGG.get());
         }
-        // =========================================================================
+       
     }
 
     @SubscribeEvent
@@ -102,17 +97,14 @@ public class ExampleMod {
     }
 
 
-    // ================== 【對齊 26.2 原始碼方法名】 ==================
     @net.neoforged.fml.common.EventBusSubscriber(modid = ExampleMod.MODID)
     public static class GameEvents {
         
         @net.neoforged.bus.api.SubscribeEvent
         public static void onIronGolemTarget(net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent event) {
-            // 1. 檢查發起仇恨的是不是鐵巨人
+           
             if (event.getEntity() instanceof net.minecraft.world.entity.animal.golem.IronGolem) {
-               
                 if (event.getNewAboutToBeSetTarget() instanceof VillageMilitiaEntity) {
-                    // 3. 攔截仇恨！強制讓鐵巨人直接無視他
                     event.setCanceled(true);
                 }
             }

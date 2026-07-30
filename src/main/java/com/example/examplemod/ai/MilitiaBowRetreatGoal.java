@@ -20,8 +20,8 @@ public class MilitiaBowRetreatGoal extends Goal {
     
     // AI 尋路與計時參數
     private int pathUpdateTimer = 0;
-    private int cooldownTicks = 0;       // 射擊後的冷卻/反應時間
-    private int targetChargeTicks = 20;  // 預計拉弓多久（滿拉約 20 ticks / 1秒）
+    private int cooldownTicks = 0;       
+    private int targetChargeTicks = 20;  
     private double moveSpeedFactor = 1.0D;
 
     public MilitiaBowRetreatGoal(VillageMilitiaEntity mob) {
@@ -66,7 +66,6 @@ public class MilitiaBowRetreatGoal extends Goal {
         // 永遠看向目標
         this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        // 冷卻時間處理
         if (this.cooldownTicks > 0) {
             this.cooldownTicks--;
             return;
@@ -89,7 +88,7 @@ public class MilitiaBowRetreatGoal extends Goal {
         } else {
             double distanceToTarget = movingEntity.distanceTo(target);
 
-            //  距離大於 15 格：向前推進靠近目標
+            
             if (distanceToTarget > 10.0D && this.mob.getMilitiaMode() != VillageMilitiaEntity.MilitiaMode.GUARD) {
                 this.pathUpdateTimer++;
                 if (this.pathUpdateTimer >= 10 || movingEntity.getNavigation().isDone()) {
@@ -98,7 +97,7 @@ public class MilitiaBowRetreatGoal extends Goal {
                     movingEntity.getNavigation().moveTo(target, baseSpeed * this.moveSpeedFactor);
                 }
             } 
-            //  小於 10 格：太近了，往後撤退
+         
             else if (distanceToTarget <= 11.0D && this.mob.getMilitiaMode() != VillageMilitiaEntity.MilitiaMode.GUARD 
                      || distanceToTarget <= 4.0D && this.mob.getMilitiaMode() == VillageMilitiaEntity.MilitiaMode.GUARD ){
                 this.pathUpdateTimer++;
