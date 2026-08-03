@@ -1,11 +1,18 @@
-# Minecraft-Mod-Develop
-https://www.curseforge.com/members/yiiiiii/projects <br>
-https://modrinth.com/mod/village_militia <br>
-just for interests.... : ) <br>
+# Village Militia
 
-## Contributing & Bug Reports
+> A passionate Minecraft mod focused on expanding village militia dynamics.
 
-Contributions are welcome! If you find any bugs, feel free to **open an issue**, or submit a **pull request** to help improve the code.
+[CurseForge Projects](https://www.curseforge.com/members/yiiiiii/projects) | [Modrinth Page](https://modrinth.com/mod/village_militia)
 
 ---
-*(歡迎大家一起改進程式碼！如果發現 Bug 請開 Issue 告訴我，也隨時歡迎提交 PR！)*
+
+##  Contributing
+
+Contributions are greatly appreciated!
+
+- **Bug Reports & Feature Requests:** Open an [Issue](../../issues).
+- **Code Contributions:** Submit a [Pull Request](../../pulls).
+
+---
+
+*(歡迎提出 Bug 回報、新功能建議或直接提交 PR！)*
