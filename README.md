@@ -1,5 +1,7 @@
 # Minecraft-Mod-Develop
-https://www.curseforge.com/members/yiiiiii/projects   just for interests... : )
+https://www.curseforge.com/members/yiiiiii/projects <br>
+https://modrinth.com/mod/village_militia <br>
+just for interests... : ) <br>
 
 ## Contributing & Bug Reports
 
