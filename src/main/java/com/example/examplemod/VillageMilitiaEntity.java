@@ -1,7 +1,9 @@
 package com.example.examplemod;
-
+import javax.annotation.Nullable;
 import com.example.examplemod.ai.MilitiaBowRetreatGoal;
 import com.example.examplemod.ai.MilitiaReturnToGuardGoal;
+import java.util.Optional;
+import net.minecraft.world.entity.EntityReference;
 import com.example.examplemod.ai.MilitiaAreaPatrolGoal;
 import com.example.examplemod.ai.MilitiaAttackTargetGoal;
 import com.example.examplemod.ai. MilitiaSpearWithoutShieldGoal ;
@@ -21,8 +23,13 @@ import net.minecraft.world.entity.LivingEntity;
 
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.CrossbowAttackMob;
 import net.minecraft.world.entity.monster.illager.Pillager;
+import net.minecraft.world.entity.animal.golem.SnowGolem;
+
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 
 import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +40,7 @@ import net.minecraft.world.item.ShieldItem;
 import com.example.examplemod.ai.MilitiaFollowOwnerGoal;
 import com.example.examplemod.ai.MilitiaSwordAndShieldAttackGoal;
 import com.example.examplemod.ai.MilitiaCrossbowRetreatGoal;
-
+import com.example.examplemod.ai.MilitiaProtectOwnerGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -66,7 +73,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         FOLLOW, 
         IDLE    
     }
-    
+
 
     @Override
     protected void registerGoals() {
@@ -88,7 +95,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         //  模式專屬 AI 邏輯 (Priority 2 ~ 5)
         // =========================================================
         
-       
+        this.targetSelector.addGoal(2, new MilitiaProtectOwnerGoal(this));
         this.goalSelector.addGoal(2, new MilitiaReturnToGuardGoal(this, 0.4D));
         this.goalSelector.addGoal(3, new MilitiaFollowOwnerGoal(this, 0.7D, 3.0F, 10.0F));
         this.goalSelector.addGoal(4, new MilitiaAreaPatrolGoal(this, 0.5D));
@@ -128,14 +135,36 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     private static final EntityDataAccessor<Boolean> IS_CELEBRATING =
         SynchedEntityData.defineId(VillageMilitiaEntity.class, EntityDataSerializers.BOOLEAN);
 
+    private static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_OWNER_REF =
+        SynchedEntityData.defineId(VillageMilitiaEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
 
-    @Override
+        @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(IS_CHARGING_CROSSBOW, false);
         builder.define(IS_CELEBRATING, false);
         builder.define(MODE, MilitiaMode.IDLE.ordinal());
+        builder.define(DATA_OWNER_REF, Optional.empty());
     }
+
+    public void setOwner(@Nullable LivingEntity entity) {
+        if (entity != null) {
+            this.entityData.set(DATA_OWNER_REF, Optional.of(EntityReference.of(entity)));
+        } else {
+            this.entityData.set(DATA_OWNER_REF, Optional.empty());
+        }
+    }
+
+    public @Nullable Player getOwner() {
+    Optional<EntityReference<LivingEntity>> ownerRef = this.entityData.get(DATA_OWNER_REF);
+    if (ownerRef.isPresent()) {
+        LivingEntity entity = ownerRef.get().getEntity(this.level(), LivingEntity.class);
+        if (entity instanceof Player player) {
+            return player;
+        }
+    }
+    return null;
+}
 
     public MilitiaMode getMilitiaMode() {
         return MilitiaMode.values()[this.entityData.get(MODE)];
@@ -168,6 +197,11 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         if (this.guardPos != null) {
             output.store("GuardPos", net.minecraft.core.BlockPos.CODEC, this.guardPos);
         }
+
+        Optional<EntityReference<LivingEntity>> ownerRef = this.entityData.get(DATA_OWNER_REF);
+        if (ownerRef.isPresent()) {
+            output.store("OwnerRef", EntityReference.codec(), ownerRef.get());
+        }
     }
 
     @Override
@@ -181,6 +215,9 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         input.read("GuardPos", net.minecraft.core.BlockPos.CODEC).ifPresent(pos -> {
             this.guardPos = pos;
         });
+
+        Optional<EntityReference<LivingEntity>> ownerRef = input.read("OwnerRef", EntityReference.codec());
+        this.entityData.set(DATA_OWNER_REF, ownerRef);
     }
 
     @Override
@@ -262,9 +299,18 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
    
 
    
+    public boolean isFriendlyTarget(@javax.annotation.Nullable LivingEntity target) {
+        return target != null
+            && (target instanceof IronGolem
+            || target instanceof AbstractVillager
+            || target instanceof SnowGolem
+            || target instanceof VillageMilitiaEntity
+            || target instanceof TamableAnimal tamable && tamable.isTame());
+    }
+
     @Override
     public void setTarget(@javax.annotation.Nullable net.minecraft.world.entity.LivingEntity target) {
-        if (target instanceof VillageMilitiaEntity ) {
+        if (this.isFriendlyTarget(target)) {
             return; 
         }
         super.setTarget(target); 
@@ -371,9 +417,13 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 );
 
                 if (nextMode == MilitiaMode.IDLE) {
+                    this.setOwner(null);
                     ItemStack refund = new ItemStack(Items.EMERALD, 3);
                     this.spawnAtLocation(serverLevel, refund);
                 } else {
+                    if (currentMode == MilitiaMode.IDLE) {
+                        this.setOwner(player);
+                    }
                     if (!player.getAbilities().instabuild) {
                         itemInHand.shrink(1);
                     }

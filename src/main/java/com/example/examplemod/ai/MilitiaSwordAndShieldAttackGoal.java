@@ -16,6 +16,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
     private double attackCooldown = 0.0D;
     private double shieldTicks = 0.0D;
     private int retreatTicks = 0;
+    private int retreatPathCooldown;
 
     public MilitiaSwordAndShieldAttackGoal(VillageMilitiaEntity mob) {
         this.mob = mob;
@@ -39,6 +40,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
         this.attackCooldown = 0;
         this.shieldTicks = 0;
         this.retreatTicks = 0;
+        this.retreatPathCooldown = 0;
     }
 
     @Override
@@ -81,11 +83,14 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
             if (isRiding) {
                 //  騎兵撤退
                 net.minecraft.world.entity.PathfinderMob vehicleMob = (net.minecraft.world.entity.PathfinderMob) this.mob.getVehicle();
-                net.minecraft.world.phys.Vec3 retreatPos = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosAway(
-                    vehicleMob, 8, 4, target.position()
-                );
-                if (retreatPos != null) {
-                    vehicleMob.getNavigation().moveTo(retreatPos.x, retreatPos.y, retreatPos.z, 1.4D);
+                if (this.retreatPathCooldown-- <= 0) {
+                    this.retreatPathCooldown = 8;
+                    net.minecraft.world.phys.Vec3 retreatPos = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosAway(
+                        vehicleMob, 8, 4, target.position()
+                    );
+                    if (retreatPos != null) {
+                        vehicleMob.getNavigation().moveTo(retreatPos.x, retreatPos.y, retreatPos.z, 1.4D);
+                    }
                 }
             } else {
                 // 步兵撤退：維持你原本的物理斜向推力
@@ -100,7 +105,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     double strafeX = backZ;
                     double strafeZ = -backX;
 
-                    double backSpeed = 0.09D;    
+                    double backSpeed = 0.085D;
                     double strafeSpeed = 0.1D;  
 
                     double vecX = (backX * backSpeed) + (strafeX * strafeSpeed * this.strafeDirection);
@@ -136,10 +141,10 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
         } else {
             if (isRiding) {
                 net.minecraft.world.entity.PathfinderMob vehicleMob = (net.minecraft.world.entity.PathfinderMob) this.mob.getVehicle();
-                vehicleMob.getNavigation().moveTo(target, 1.6D);
+                vehicleMob.getNavigation().moveTo(target, 1.9D);
             } else {
                 //  步兵衝鋒
-                this.mob.getNavigation().moveTo(target, 0.85D);
+                this.mob.getNavigation().moveTo(target, 0.8D);
             }
             
             // 進入攻擊距離且冷卻完畢
@@ -173,7 +178,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                         this.retreatTicks = 0;
                     }
                 } else {
-                    // 🏃步兵維持原樣
+
                     if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
                       
                         this.retreatTicks = 3 + this.mob.getRandom().nextInt(25);

@@ -1,5 +1,5 @@
 package com.example.examplemod.ai;
-
+import net.minecraft.world.entity.player.Player;
 import com.example.examplemod.VillageMilitiaEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -29,7 +29,7 @@ public class MilitiaFollowOwnerGoal extends Goal {
         this.startDistance = startDistance;
         this.stopDistance = stopDistance;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        
+
         if (!(militia.getNavigation() instanceof GroundPathNavigation) && !(militia.getNavigation() instanceof FlyingPathNavigation)) {
             throw new IllegalArgumentException("Unsupported mob type for MilitiaFollowOwnerGoal");
         }
@@ -122,9 +122,16 @@ public class MilitiaFollowOwnerGoal extends Goal {
         }
     }
 
-    private LivingEntity getOwner() {
-        // 如果 owner 距離超過 15 格，getNearestPlayer 就會回傳 null。
-        return this.militia.level().getNearestPlayer(this.militia, 25.0D);
+    private @Nullable LivingEntity getOwner() {
+        // 🎯 改為呼叫 militia 的 getOwner() 方法，獲取經由 EntityReference / UUID 綁定的真正玩家
+        Player ownerPlayer = this.militia.getOwner();
+
+        // 如果主人不在線上、不在同一個世界維度，或是處於旁觀者模式 (Spectator)，則不進行跟隨
+        if (ownerPlayer == null || ownerPlayer.isSpectator()) {
+            return null;
+        }
+
+        return ownerPlayer;
     }
 
     // 已完全移除 teleportToOwner() 邏輯

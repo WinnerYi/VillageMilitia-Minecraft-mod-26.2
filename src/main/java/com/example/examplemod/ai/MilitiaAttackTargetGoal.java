@@ -10,9 +10,12 @@ import java.util.List;
 import net.minecraft.world.phys.AABB;
 
 public class MilitiaAttackTargetGoal extends Goal {
+    private static final int TARGET_DURATION_TICKS = 100;
     private final Mob mob;
     private final double range = 16.0D;
     private int lastHurtTimestamp = 0;
+    private int targetTicks;
+    private LivingEntity selectedTarget;
 
     public MilitiaAttackTargetGoal(Mob mob) {
         this.mob = mob;
@@ -50,7 +53,9 @@ public class MilitiaAttackTargetGoal extends Goal {
 
         if (!enemies.isEmpty()) {
             enemies.sort((e1, e2) -> Double.compare(this.mob.distanceToSqr(e1), this.mob.distanceToSqr(e2)));
-            this.mob.setTarget(enemies.get(0));
+            this.selectedTarget = enemies.get(0);
+            this.mob.setTarget(this.selectedTarget);
+            this.targetTicks = TARGET_DURATION_TICKS;
             return true;
         }
 
@@ -68,12 +73,21 @@ public class MilitiaAttackTargetGoal extends Goal {
         if (currentTarget == null || !currentTarget.isAlive()) {
             return false;
         }
-        return this.mob.distanceToSqr(currentTarget) <= range * range;
+        return this.targetTicks-- > 0
+            && this.mob.distanceToSqr(currentTarget) <= range * range;
     }
 
-    /**
-     * 🎯 關鍵修復：檢查受傷並「強制重置尋路導航」
-     */
+    @Override
+    public void stop() {
+        if (this.mob.getTarget() == this.selectedTarget) {
+            this.mob.setTarget(null);
+        }
+        this.selectedTarget = null;
+        this.targetTicks = 0;
+        super.stop();
+    }
+
+
     private boolean checkAndSwitchTarget() {
         LivingEntity attacker = this.mob.getLastHurtByMob();
         int currentHurtTimestamp = this.mob.getLastHurtByMobTimestamp();
@@ -86,8 +100,10 @@ public class MilitiaAttackTargetGoal extends Goal {
 
                 // 如果攻擊者不是現在的目標
                 if (attacker != this.mob.getTarget()) {
-                    this.mob.setTarget(attacker);              // 1. 更換 Target
-                    this.mob.getNavigation().stop();           // 2. 🎯【核心精髓】：強制打斷舊的移動路徑！
+                    this.selectedTarget = attacker;
+                    this.mob.setTarget(attacker);
+                    this.targetTicks = TARGET_DURATION_TICKS;
+                    this.mob.getNavigation().stop();
                     return true;
                 }
             }
