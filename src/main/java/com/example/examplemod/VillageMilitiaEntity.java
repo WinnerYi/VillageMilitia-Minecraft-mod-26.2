@@ -19,11 +19,13 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.NeutralMob;
 
 
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.CrossbowAttackMob;
 import net.minecraft.world.entity.monster.illager.Pillager;
 import net.minecraft.world.entity.animal.golem.SnowGolem;
@@ -305,6 +307,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
             || target instanceof AbstractVillager
             || target instanceof SnowGolem
             || target instanceof VillageMilitiaEntity
+            || target instanceof Animal && !(target instanceof NeutralMob)
             || target instanceof TamableAnimal tamable && tamable.isTame());
     }
 
