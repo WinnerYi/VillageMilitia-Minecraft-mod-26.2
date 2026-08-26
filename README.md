@@ -4,6 +4,16 @@
 
 [CurseForge Projects](https://www.curseforge.com/members/yiiiiii/projects) | [Modrinth Page](https://modrinth.com/mod/village_militia)
 
+## Development
+
+Requires **Java 25**.
+
+```bash
+./gradlew (clean) build         # Compile and package the mod
+./gradlew runClient             # Launch Minecraft for testing
+./gradlew runGameTestServer     # Run GameTests
+```
+
 ---
 
 ##  Contributing
