@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "village_militia:block/example_block"
+    }
+  }
+}

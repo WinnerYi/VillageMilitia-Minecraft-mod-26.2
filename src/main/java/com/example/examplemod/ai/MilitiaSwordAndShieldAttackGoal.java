@@ -112,7 +112,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     double vecZ = (backZ * backSpeed) + (strafeZ * strafeSpeed * this.strafeDirection);
                     
                     this.mob.setDeltaMovement(vecX, this.mob.getDeltaMovement().y, vecZ);
-                    this.mob.hurtMarked = true;
+                    this.mob.needsSync = true;
                 }
 
                
@@ -150,7 +150,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
             // 進入攻擊距離且冷卻完畢
             if (distanceSq <= attackReach && this.attackCooldown <= 0 && this.mob.getSensing().hasLineOfSight(target)) {
                 this.mob.stopUsingItem();
-                this.mob.swing(InteractionHand.MAIN_HAND, true);
+                this.mob.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT);
                 if (this.mob.level() instanceof ServerLevel serverLevel) {
                     serverLevel.broadcastEntityEvent(this.mob, (byte) 4);
                     this.mob.doHurtTarget(serverLevel, target);

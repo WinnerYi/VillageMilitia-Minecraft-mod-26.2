@@ -68,6 +68,21 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     private final SimpleContainer inventory = new SimpleContainer(5);
     private int celebrateTicks = 0;
     private BlockPos guardPos = null;
+    private boolean militiaSwinging;
+    private int militiaSwingTime;
+    private InteractionHand militiaSwingingArm;
+
+    public boolean isMilitiaSwinging() {
+        return this.militiaSwinging;
+    }
+
+    public int getMilitiaSwingTime() {
+        return this.militiaSwingTime;
+    }
+
+    public int getMilitiaSwingDuration() {
+        return 6;
+    }
 
     public enum MilitiaMode {
         PATROL,  
@@ -438,7 +453,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                     net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F
                 );
                
-                player.swing(hand, true);
+                player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
                 return InteractionResult.SUCCESS_SERVER;
             }
 
@@ -463,7 +478,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                         net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC.value(), 
                         net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F
                     );
-                    player.swing(hand, true);
+                    player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
                     return InteractionResult.SUCCESS_SERVER;
                 }
             } 
@@ -507,7 +522,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                         net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON, 
                         net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F
                     );
-                    player.swing(hand, true);
+                    player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
                     return InteractionResult.SUCCESS_SERVER;
                 }
             }
@@ -533,13 +548,13 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
     public void aiStep() {
         super.aiStep();
                                 /// important
-        if (this.level().isClientSide() && this.swinging) {
-            this.swingTime++; // 強制讓 -1 變成 0, 1, 2, 3, 4, 5...
+        if (this.level().isClientSide() && this.militiaSwinging) {
+            this.militiaSwingTime++; // 強制讓 -1 變成 0, 1, 2, 3, 4, 5...
             
             // 原版揮手預設持續 6 個 tick
-            if (this.swingTime >= this.getCurrentSwingDuration()) {
-                this.swingTime = 0;
-                this.swinging = false;
+            if (this.militiaSwingTime >= this.getMilitiaSwingDuration()) {
+                this.militiaSwingTime = 0;
+                this.militiaSwinging = false;
             }
         }
         
@@ -622,16 +637,16 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             if (this.level().isClientSide()) {
                 
                 this.stopUsingItem();      
-                this.swinging = true;     
-                this.swingTime = 0;       
-                this.swingingArm = net.minecraft.world.InteractionHand.MAIN_HAND; 
+                this.militiaSwinging = true;
+                this.militiaSwingTime = 0;
+                this.militiaSwingingArm = net.minecraft.world.InteractionHand.MAIN_HAND;
             }
         } else if (id == 5) {
             if (this.level().isClientSide()) {
                 this.stopUsingItem();
-                this.swinging = true;
-                this.swingTime = -1;
-                this.swingingArm = net.minecraft.world.InteractionHand.OFF_HAND;
+                this.militiaSwinging = true;
+                this.militiaSwingTime = -1;
+                this.militiaSwingingArm = net.minecraft.world.InteractionHand.OFF_HAND;
             }
         } else {
             super.handleEntityEvent(id);
