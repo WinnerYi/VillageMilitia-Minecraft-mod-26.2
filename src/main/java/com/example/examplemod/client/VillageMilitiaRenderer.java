@@ -63,14 +63,14 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
         state.isCelebrating = entity.isCelebrating();
         
      
-        if (entity.swinging) {
-            float duration = (float) entity.getCurrentSwingDuration();
+        if (entity.isMilitiaSwinging()) {
+            float duration = (float) entity.getMilitiaSwingDuration();
             if (duration <= 0.0F) duration = 6.0F;
             
-            state.attackTime = (entity.swingTime + partialTick) / duration;
-            state.attackTime = net.minecraft.util.Mth.clamp(state.attackTime, 0.0F, 1.0F);
+            state.swingAnimation = (entity.getMilitiaSwingTime() + partialTick) / duration;
+            state.swingAnimation = net.minecraft.util.Mth.clamp(state.swingAnimation, 0.0F, 1.0F);
         } else {
-            state.attackTime = 0.0F;
+            state.swingAnimation = 0.0F;
         }
         
         
@@ -153,7 +153,7 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
         }
     
         else {
-            if (state.attackTime > 0.0F) {
+            if (state.swingAnimation > 0.0F) {
                 state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
                 state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
             } else {

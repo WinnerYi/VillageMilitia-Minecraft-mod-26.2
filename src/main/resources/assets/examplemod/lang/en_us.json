@@ -1,6 +1,6 @@
 {
   "itemGroup.examplemod": "Example Mod Tab",
-  "block.examplemod.example_block": "Example Block",
+  "block.village_militia.example_block": "Example Block",
   "item.examplemod.example_item": "Example Item",
 
   "examplemod.configuration.title": "Example Mod Configs",
