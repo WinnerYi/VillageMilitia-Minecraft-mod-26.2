@@ -1,5 +1,5 @@
-package com.example.examplemod.ai;
-import com.example.examplemod.VillageMilitiaEntity;
+package com.example.examplemod.ai.militia;
+import com.example.examplemod.entity.VillageMilitiaEntity;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;

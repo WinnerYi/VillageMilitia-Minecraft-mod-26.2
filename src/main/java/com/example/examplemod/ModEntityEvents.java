@@ -1,5 +1,8 @@
 package com.example.examplemod;
 
+import com.example.examplemod.entity.VillageDruidEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
+
 import net.minecraft.world.item.Items;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -28,6 +31,11 @@ import java.util.EnumSet;
 @EventBusSubscriber(modid = ExampleMod.MODID)
 public class ModEntityEvents {
 
+    private static boolean isVillageUnit(LivingEntity entity) {
+        return entity instanceof VillageMilitiaEntity
+            || entity instanceof VillageDruidEntity;
+    }
+
    
     public static class ForceTargetGuardGoal extends Goal {
         private final Mob mob;
@@ -47,10 +55,11 @@ public class ModEntityEvents {
             }
 
             
-            java.util.List<VillageMilitiaEntity> targets = this.mob.level().getEntitiesOfClass(
-                VillageMilitiaEntity.class,
+            java.util.List<LivingEntity> targets = this.mob.level().getEntitiesOfClass(
+                LivingEntity.class,
                 this.mob.getBoundingBox().inflate(range, 4.0D, range),
-                LivingEntity::isAlive
+                entity -> entity.isAlive()
+                    && isVillageUnit(entity)
             );
 
             if (!targets.isEmpty()) {
@@ -64,7 +73,9 @@ public class ModEntityEvents {
         @Override
         public boolean canContinueToUse() {
             LivingEntity currentTarget = this.mob.getTarget();
-            return currentTarget instanceof VillageMilitiaEntity && currentTarget.isAlive();
+            return currentTarget != null
+                && isVillageUnit(currentTarget)
+                && currentTarget.isAlive();
         }
     }
 
@@ -75,7 +86,8 @@ public class ModEntityEvents {
         }
 
       
-        if (event.getEntity() instanceof VillageMilitiaEntity) {
+        if (event.getEntity() instanceof LivingEntity livingEntity
+            && isVillageUnit(livingEntity)) {
             return;
         }
 
@@ -94,52 +106,73 @@ public class ModEntityEvents {
 
     @SubscribeEvent
     public static void onVillagerInteract(PlayerInteractEvent.EntityInteract event) {
-        
         if (event.getLevel().isClientSide() || event.getHand() != event.getEntity().getUsedItemHand()) {
             return;
         }
 
         net.minecraft.world.entity.player.Player player = event.getEntity();
         ItemStack mainHandItem = player.getMainHandItem();
-        
-        
-        if (player.isShiftKeyDown() && mainHandItem.is(Items.IRON_HELMET)) {
-            
-            if (event.getTarget() instanceof Villager villager) {
 
+        if (player.isShiftKeyDown()) {
+            if (event.getTarget() instanceof Villager villager) {
                 boolean isNone = villager.getVillagerData().profession().is(VillagerProfession.NONE);
-               
+
                 if (isNone && !villager.isBaby()) {
-                     
-               
                     ServerLevel serverLevel = (ServerLevel) event.getLevel();
                     BlockPos spawnPos = villager.blockPosition();
+                    if (mainHandItem.is(Items.IRON_HELMET)) {
+                        VillageMilitiaEntity militia = ModEntities.VILLAGE_MILITIA.get().create(
+                            serverLevel, null, spawnPos,
+                            net.minecraft.world.entity.EntitySpawnReason.SPAWNER,
+                            false, false
+                        );
 
-                    
-                    VillageMilitiaEntity militia = ModEntities.VILLAGE_MILITIA.get().create(
-                        serverLevel, 
-                        null,                    
-                        spawnPos,               
-                        net.minecraft.world.entity.EntitySpawnReason.SPAWNER, 
-                        false,                   
-                        false                  
-                    );
-                    if (militia != null) {
-                       
-                        militia.setPos(villager.getX(), villager.getY(), villager.getZ());
-                       
-                        militia.setYRot(villager.getYRot());
-                        militia.setXRot(villager.getXRot());
-                        militia.setYHeadRot(villager.getYRot());
-                        serverLevel.addFreshEntity(militia);
-                        villager.discard();
+                        if (militia != null) {
+                            militia.setPos(villager.getX(), villager.getY(), villager.getZ());
+                            militia.setYRot(villager.getYRot());
+                            militia.setXRot(villager.getXRot());
+                            militia.setYHeadRot(villager.getYRot());
+                            
+                            serverLevel.addFreshEntity(militia);
+                            villager.discard();
 
-                       
-                        serverLevel.playSound(null, spawnPos, SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 0.8F);
+                            if (!player.getAbilities().instabuild) {
+                                mainHandItem.shrink(1);
+                            }
+
+                            serverLevel.playSound(null, spawnPos, SoundEvents.VILLAGER_YES, SoundSource.NEUTRAL, 1.0F, 0.8F);
+
+                            event.setCancellationResult(InteractionResult.SUCCESS);
+                            event.setCanceled(true);
+                        }
+                    } 
+                    // 🎯 2. 金蘋果 -> 轉化為德魯伊 (Village Druid)
+                    else if (mainHandItem.is(Items.GOLDEN_APPLE)) {
+                        // ⚠️ 請確保 ModEntities.VILLAGE_DRUID 指向你的德魯伊 DeferredHolder / Supplier
+                        var druid = ModEntities.VILLAGE_DRUID.get().create(
+                            serverLevel, null, spawnPos,
+                            net.minecraft.world.entity.EntitySpawnReason.SPAWNER,
+                            false, false
+                        );
+
+                        if (druid != null) {
+                            druid.setPos(villager.getX(), villager.getY(), villager.getZ());
+                            druid.setYRot(villager.getYRot());
+                            druid.setXRot(villager.getXRot());
+                            druid.setYHeadRot(villager.getYRot());
+
+                            serverLevel.addFreshEntity(druid);
+                            villager.discard();
+
                         
-                        
-                        event.setCancellationResult(InteractionResult.SUCCESS);
-                        event.setCanceled(true);
+                            if (!player.getAbilities().instabuild) {
+                                mainHandItem.shrink(1);
+                            }
+                            serverLevel.playSound(null, spawnPos, SoundEvents.ZOMBIE_VILLAGER_CURE, SoundSource.NEUTRAL, 1.0F, 1.0F);
+
+                            event.setCancellationResult(InteractionResult.SUCCESS);
+                            event.setCanceled(true);
+                        }
                     }
                 }
             }
@@ -155,15 +188,17 @@ public class ModEntityEvents {
                 
                
                 net.minecraft.world.phys.AABB alertArea = victim.getBoundingBox().inflate(32.0D);
-                java.util.List<VillageMilitiaEntity> nearbyMilitia = victim.level().getEntitiesOfClass(
-                    VillageMilitiaEntity.class, 
+                java.util.List<LivingEntity> nearbyUnits = victim.level().getEntitiesOfClass(
+                    LivingEntity.class,
                     alertArea
                 );
                 
-                //  讓所有附近的民兵把兇手設為第一攻擊目標
-                for (VillageMilitiaEntity militia : nearbyMilitia) {
-                    if (militia.getTarget() == null || militia.getTarget() != attacker) {
-                        militia.setTarget(attacker);
+                // 讓所有附近的村莊單位把兇手設為第一攻擊目標
+                for (LivingEntity unit : nearbyUnits) {
+                    if (isVillageUnit(unit)
+                        && unit instanceof Mob mob
+                        && (mob.getTarget() == null || mob.getTarget() != attacker)) {
+                        mob.setTarget(attacker);
                     }
                 }
             }
@@ -175,14 +210,16 @@ public class ModEntityEvents {
     @net.neoforged.bus.api.SubscribeEvent
         public static void onMilitiaHurt(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
             
-            if (event.getEntity() instanceof VillageMilitiaEntity militia) {
+            if (event.getEntity() instanceof LivingEntity livingEntity
+                && isVillageUnit(livingEntity)
+                && livingEntity instanceof Mob villageUnit) {
                
                 if (event.getSource().getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker) {
                     
                 
-                    net.minecraft.world.phys.AABB searchArea = militia.getBoundingBox().inflate(16.0D);
+                    net.minecraft.world.phys.AABB searchArea = villageUnit.getBoundingBox().inflate(16.0D);
                     java.util.List<net.minecraft.world.entity.animal.golem.IronGolem> golems = 
-                        militia.level().getEntitiesOfClass(net.minecraft.world.entity.animal.golem.IronGolem.class, searchArea);
+                        villageUnit.level().getEntitiesOfClass(net.minecraft.world.entity.animal.golem.IronGolem.class, searchArea);
 
                     
                     for (net.minecraft.world.entity.animal.golem.IronGolem golem : golems) {

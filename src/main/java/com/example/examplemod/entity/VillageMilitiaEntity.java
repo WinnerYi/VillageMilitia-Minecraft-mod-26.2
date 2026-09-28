@@ -1,12 +1,12 @@
-package com.example.examplemod;
+package com.example.examplemod.entity;
 import javax.annotation.Nullable;
-import com.example.examplemod.ai.MilitiaBowRetreatGoal;
-import com.example.examplemod.ai.MilitiaReturnToGuardGoal;
+import com.example.examplemod.ai.militia.MilitiaBowRetreatGoal;
+import com.example.examplemod.ai.militia.MilitiaReturnToGuardGoal;
 import java.util.Optional;
 import net.minecraft.world.entity.EntityReference;
-import com.example.examplemod.ai.MilitiaAreaPatrolGoal;
-import com.example.examplemod.ai.MilitiaAttackTargetGoal;
-import com.example.examplemod.ai. MilitiaSpearWithoutShieldGoal ;
+import com.example.examplemod.ai.militia.MilitiaAreaPatrolGoal;
+import com.example.examplemod.ai.militia.MilitiaAttackTargetGoal;
+import com.example.examplemod.ai.militia.MilitiaSpearWithoutShieldGoal;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.world.entity.EntityType;
@@ -39,10 +39,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ShieldItem;
 
-import com.example.examplemod.ai.MilitiaFollowOwnerGoal;
-import com.example.examplemod.ai.MilitiaSwordAndShieldAttackGoal;
-import com.example.examplemod.ai.MilitiaCrossbowRetreatGoal;
-import com.example.examplemod.ai.MilitiaProtectOwnerGoal;
+import com.example.examplemod.ai.militia.MilitiaFollowOwnerGoal;
+import com.example.examplemod.ai.militia.MilitiaSwordAndShieldAttackGoal;
+import com.example.examplemod.ai.militia.MilitiaCrossbowRetreatGoal;
+import com.example.examplemod.ai.militia.MilitiaProtectOwnerGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -108,9 +108,6 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         this.goalSelector.addGoal(2, new  MilitiaSpearWithoutShieldGoal<>(this, 0.9, 1.0, 10.0F, 2.0F));
         this.goalSelector.addGoal(2, new MilitiaSwordAndShieldAttackGoal(this));
 
-        // =========================================================
-        //  模式專屬 AI 邏輯 (Priority 2 ~ 5)
-        // =========================================================
         
         this.targetSelector.addGoal(2, new MilitiaProtectOwnerGoal(this));
         this.goalSelector.addGoal(2, new MilitiaReturnToGuardGoal(this, 0.4D));
@@ -387,7 +384,6 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     }
 
 
-    // ================== 【 右鍵智慧換裝與互動機制 】 ==================
 @Override
 public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
     ItemStack itemInHand = player.getItemInHand(hand);
@@ -457,9 +453,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 return InteractionResult.SUCCESS_SERVER;
             }
 
-            // =========================================================
-            // B. 木棒 + Shift + 右鍵：卸下全部裝備
-            // =========================================================
+       
             if (itemInHand.is(Items.STICK)) {
                 boolean dropAny = false;
 
@@ -483,9 +477,7 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 }
             } 
 
-            // =========================================================
-            //  一般物品 + Shift + 右鍵：單件裝備替換邏輯
-            // =========================================================
+        
             else if (!itemInHand.isEmpty()) {
                 EquipmentSlot slotToEquip = null;
 
@@ -527,9 +519,6 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 }
             }
 
-            // =========================================================
-            // D. Shift + 雙手空手 + 主手右鍵：下馬邏輯 
-            // =========================================================
             if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().isEmpty() && player.getOffhandItem().isEmpty()) {
                 if (this.isPassenger()) {
                     this.stopRiding();

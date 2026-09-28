@@ -1,5 +1,8 @@
 package com.example.examplemod;
 
+import com.example.examplemod.entity.VillageDruidEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
+
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,6 +47,13 @@ public class ExampleMod {
             )
     );
 
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.SpawnEggItem> DRUID_SPAWN_EGG =
+        ITEMS.registerItem("druid_spawn_egg",
+            properties -> new net.minecraft.world.item.SpawnEggItem(
+                properties.spawnEgg(ModEntities.VILLAGE_DRUID.get())
+            )
+    );
+
     
 
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer) {
@@ -57,6 +67,7 @@ public class ExampleMod {
         ModEntities.ENTITY_TYPES.register(modEventBus);
     
         modEventBus.addListener(this::registerEntityAttributes);
+        modEventBus.addListener(this::registerSpawnPlacements);
         modEventBus.addListener(this::registerRenderers);
 
         NeoForge.EVENT_BUS.register(this);
@@ -68,6 +79,17 @@ public class ExampleMod {
 
     private void registerEntityAttributes(net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) {
         event.put(ModEntities.VILLAGE_MILITIA.get(), VillageMilitiaEntity.createAttributes().build());
+        event.put(ModEntities.VILLAGE_DRUID.get(), VillageDruidEntity.createAttributes().build());
+    }
+
+    private void registerSpawnPlacements(net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent event) {
+        event.register(
+            ModEntities.VILLAGE_DRUID.get(),
+            net.minecraft.world.entity.SpawnPlacementTypes.NO_RESTRICTIONS,
+            net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            (entityType, level, spawnReason, blockPos, random) -> true,
+            net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent.Operation.REPLACE
+        );
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -83,6 +105,7 @@ public class ExampleMod {
    
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(MILITIA_SPAWN_EGG.get());
+            event.accept(DRUID_SPAWN_EGG.get());
         }
        
     }
@@ -94,6 +117,7 @@ public class ExampleMod {
 
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.VILLAGE_MILITIA.get(), com.example.examplemod.client.VillageMilitiaRenderer::new);
+        event.registerEntityRenderer(ModEntities.VILLAGE_DRUID.get(), com.example.examplemod.client.VillageDruidRenderer::new);
     }
 
 
@@ -102,9 +126,9 @@ public class ExampleMod {
         
         @net.neoforged.bus.api.SubscribeEvent
         public static void onIronGolemTarget(net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent event) {
-           
             if (event.getEntity() instanceof net.minecraft.world.entity.animal.golem.IronGolem) {
-                if (event.getNewAboutToBeSetTarget() instanceof VillageMilitiaEntity) {
+                if (event.getNewAboutToBeSetTarget() instanceof VillageMilitiaEntity
+                    || event.getNewAboutToBeSetTarget() instanceof VillageDruidEntity) {
                     event.setCanceled(true);
                 }
             }

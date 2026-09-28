@@ -1,4 +1,4 @@
-package com.example.examplemod.ai; 
+package com.example.examplemod.ai.militia;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.InteractionHand;
@@ -42,9 +42,7 @@ public class MilitiaSpearWithoutShieldGoal<T extends PathfinderMob> extends Goal
 
     @Override
     public boolean canUse() {
-        if (this.hasShieldInOffhand()) {
-            return false;
-        }
+        
         return this.ableToAttack() && !this.mob.isUsingItem();
     }
 
@@ -59,22 +57,21 @@ public class MilitiaSpearWithoutShieldGoal<T extends PathfinderMob> extends Goal
         return reducedTickDelay(durationTicks);
     }
 
-    private boolean hasShieldInOffhand() {
-            ItemStack offhandItem = this.mob.getItemInHand(InteractionHand.OFF_HAND);
+    // private boolean hasShieldInOffhand() {
+    //         ItemStack offhandItem = this.mob.getItemInHand(InteractionHand.OFF_HAND);
             
          
-            if (offhandItem.is(Items.SHIELD)) {
-                return true;
-            }
+    //         if (offhandItem.is(Items.SHIELD)) {
+    //             return true;
+    //         }
             
-            return false;
-     }
+    //         return false;
+    //  }
 
     @Override
     public boolean canContinueToUse() {
-        if (this.hasShieldInOffhand()) {
-            return false;
-        }
+        
+        
         return this.state != null && !this.state.done && this.ableToAttack();
     }
 
@@ -108,7 +105,7 @@ public class MilitiaSpearWithoutShieldGoal<T extends PathfinderMob> extends Goal
             Entity mount = this.mob.getRootVehicle();
             float speedModifier = 0.9F;
             if (mount instanceof Mob vehicleMob && mount != this.mob) {
-                speedModifier = vehicleMob.chargeSpeedModifier() * 1.7F;
+                speedModifier = vehicleMob.chargeSpeedModifier() * 2.1F;
             }
 
             int mountDistance = this.mob.isPassenger() ? 2 : 0;

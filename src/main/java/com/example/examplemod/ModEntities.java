@@ -1,5 +1,8 @@
 package com.example.examplemod; // 請確保跟你的主程式 package 一致
 
+import com.example.examplemod.entity.VillageDruidEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -20,5 +23,15 @@ public class ModEntities {
             EntityType.Builder.of(VillageMilitiaEntity::new, MobCategory.CREATURE)
                 .sized(0.6F, 1.95F) // 碰撞箱大小（almost same as 村民）
                 .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(ExampleMod.MODID, "village_militia")))
+        );
+
+    public static final Supplier<EntityType<VillageDruidEntity>> VILLAGE_DRUID =
+        ENTITY_TYPES.register("village_druid", () ->
+            EntityType.Builder.of(VillageDruidEntity::new, MobCategory.CREATURE)
+                .sized(0.6F, 1.95F)
+                .build(ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    Identifier.fromNamespaceAndPath(ExampleMod.MODID, "village_druid")
+                ))
         );
 }

@@ -1,14 +1,18 @@
-package com.example.examplemod.ai;
+package com.example.examplemod.ai.militia;
 
-import com.example.examplemod.VillageMilitiaEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
+
 import java.util.EnumSet;
+import net.minecraft.core.component.DataComponents;
 
 public class MilitiaSwordAndShieldAttackGoal extends Goal {
     private double strafeDirection = 0.0D;
@@ -105,7 +109,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     double strafeX = backZ;
                     double strafeZ = -backX;
 
-                    double backSpeed = 0.085D;
+                    double backSpeed = 0.08D;
                     double strafeSpeed = 0.1D;  
 
                     double vecX = (backX * backSpeed) + (strafeX * strafeSpeed * this.strafeDirection);
@@ -144,7 +148,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                 vehicleMob.getNavigation().moveTo(target, 1.9D);
             } else {
                 //  步兵衝鋒
-                this.mob.getNavigation().moveTo(target, 0.8D);
+                this.mob.getNavigation().moveTo(target, 0.7D);
             }
             
             // 進入攻擊距離且冷卻完畢
@@ -156,11 +160,16 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     this.mob.doHurtTarget(serverLevel, target);
                 }
                 
-                // 核心冷卻觸發
-                if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
-                    this.attackCooldown = 20; // 攻擊冷卻 1 秒
-                } else if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.WEAPON)) {
-                    this.attackCooldown = 12.5D; // 攻擊冷卻 1 秒
+                ItemStack mainHand = this.mob.getMainHandItem();
+
+                if (mainHand.is(ItemTags.SWORDS)) {
+                    this.attackCooldown = 13; 
+                } else if (mainHand.is(ItemTags.AXES)) {
+                    this.attackCooldown = 26; 
+                } else if (mainHand.has(DataComponents.WEAPON)) {
+                    this.attackCooldown = 20; // 預設 1 秒
+                } else {
+                    this.attackCooldown = 12;
                 }
                 
 
@@ -179,7 +188,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     }
                 } else {
 
-                    if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
+                    if (this.mob.getMainHandItem().has(DataComponents.KINETIC_WEAPON)) {
                       
                         this.retreatTicks = 3 + this.mob.getRandom().nextInt(25);
                     } else {
@@ -194,7 +203,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
     }
     private double getAttackReachSqr(LivingEntity target) {
        
-        if (this.mob.getMainHandItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
+        if (this.mob.getMainHandItem().has(DataComponents.KINETIC_WEAPON)) {
             return  12.0D; 
         }
         return 7.5D; 

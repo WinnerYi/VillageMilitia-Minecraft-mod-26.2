@@ -1,4 +1,4 @@
-package com.example.examplemod.ai;
+package com.example.examplemod.ai.militia;
 
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.LivingEntity;
