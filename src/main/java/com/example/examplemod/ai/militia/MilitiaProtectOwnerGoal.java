@@ -1,6 +1,6 @@
-package com.example.examplemod.ai;
+package com.example.examplemod.ai.militia;
 
-import com.example.examplemod.VillageMilitiaEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.player.Player;

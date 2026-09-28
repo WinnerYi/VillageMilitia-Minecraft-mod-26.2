@@ -1,6 +1,6 @@
-package com.example.examplemod.ai;
+package com.example.examplemod.ai.militia;
 import java.util.EnumSet;
-import com.example.examplemod.VillageMilitiaEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
 import net.minecraft.world.entity.ai.goal.*;
 
 import net.minecraft.core.BlockPos;

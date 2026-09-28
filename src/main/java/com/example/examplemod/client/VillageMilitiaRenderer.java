@@ -1,7 +1,7 @@
 package com.example.examplemod.client;
 
 import com.example.examplemod.ExampleMod;
-import com.example.examplemod.VillageMilitiaEntity;
+import com.example.examplemod.entity.VillageMilitiaEntity;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -9,9 +9,10 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.BowItem;
-import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.*;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.*;
+
 
 public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEntity, VillageMilitiaRenderer.MyRenderState, HumanoidModel<VillageMilitiaRenderer.MyRenderState>> {
     
@@ -74,7 +75,7 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
         }
         
         
-        state.isCrouching = entity.isShiftKeyDown() || entity.getPose() == net.minecraft.world.entity.Pose.CROUCHING;
+        state.isCrouching = entity.isShiftKeyDown() || entity.getPose() == Pose.CROUCHING;
 
         // 讀取主手物品與敵對狀態
         ItemStack mainHand = entity.getMainHandItem();
@@ -129,11 +130,10 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
             }
         } 
 
-        else if (mainHand.has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON) 
-                 && !entity.getOffhandItem().is(net.minecraft.world.item.Items.SHIELD)) {
+        else if (mainHand.has(DataComponents.KINETIC_WEAPON)) {
             
            
-            if (entity.isUsingItem() && entity.getUseItem().has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON)) {
+            if (entity.isUsingItem() && entity.getUseItem().has(DataComponents.KINETIC_WEAPON)) {
                 state.isUsingItem = true;
                 state.useItemHand = entity.getUsedItemHand();
                 
@@ -147,8 +147,13 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
             } 
             // 平時放鬆
             else {
-                state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
-                state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+                if (mainHand.has(DataComponents.KINETIC_WEAPON)) {
+                    state.rightArmPose = HumanoidModel.ArmPose.SPEAR;
+                } else {
+                    state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
+                    state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
+                }
+                
             }
         }
     
@@ -157,7 +162,7 @@ public class VillageMilitiaRenderer extends HumanoidMobRenderer<VillageMilitiaEn
                 state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
                 state.leftArmPose = HumanoidModel.ArmPose.EMPTY;
             } else {
-                if ((mainHand.has(net.minecraft.core.component.DataComponents.KINETIC_WEAPON) || mainHand.has(net.minecraft.core.component.DataComponents.WEAPON)) && state.isAggressive) {
+                if ((mainHand.has(DataComponents.KINETIC_WEAPON) || mainHand.has(DataComponents.WEAPON)) && state.isAggressive) {
                     state.rightArmPose = HumanoidModel.ArmPose.ITEM;
                 } else {
                     state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
