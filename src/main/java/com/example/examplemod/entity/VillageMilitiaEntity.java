@@ -283,8 +283,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
    
     @Override
     public ItemStack getProjectile(ItemStack weapon) {
-        if (weapon.getItem() instanceof net.minecraft.world.item.ProjectileWeaponItem weaponItem) {
-
+        if (weapon.getItem() instanceof net.minecraft.world.item.ProjectileWeaponItem) {
             return new ItemStack(net.minecraft.world.item.Items.ARROW);
         }
         
@@ -316,6 +315,7 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     public boolean isFriendlyTarget(@javax.annotation.Nullable LivingEntity target) {
         return target != null
             && (target instanceof IronGolem
+            || target instanceof VillageDruidEntity
             || target instanceof AbstractVillager
             || target instanceof SnowGolem
             || target instanceof VillageMilitiaEntity
@@ -344,10 +344,6 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnReason, SpawnGroupData spawnData) {
         SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnReason, spawnData);
-        if (this.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof net.minecraft.world.item.BannerItem) {
-            this.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
-            
-        }
         this.populateDefaultEquipmentSlots(level.getRandom(), difficulty);
 
         return result;
@@ -626,6 +622,10 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             if (this.level().isClientSide()) {
                 
                 this.stopUsingItem();      
+                this.swing(
+                    net.minecraft.world.InteractionHand.MAIN_HAND,
+                    net.minecraft.world.item.component.SwingAnimation.DEFAULT
+                );
                 this.militiaSwinging = true;
                 this.militiaSwingTime = 0;
                 this.militiaSwingingArm = net.minecraft.world.InteractionHand.MAIN_HAND;

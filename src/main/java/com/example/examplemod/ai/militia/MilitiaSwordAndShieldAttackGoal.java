@@ -41,6 +41,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
 
     @Override
     public void start() {
+        this.mob.setAggressive(true);
         this.attackCooldown = 0;
         this.shieldTicks = 0;
         this.retreatTicks = 0;
@@ -49,6 +50,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
 
     @Override
     public void stop() {
+        this.mob.setAggressive(false);
         this.mob.stopUsingItem();
         this.mob.getNavigation().stop();
         // 如果下馬了，順便確保馬也停下
@@ -110,7 +112,7 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                     double strafeZ = -backX;
 
                     double backSpeed = 0.08D;
-                    double strafeSpeed = 0.1D;  
+                    double strafeSpeed = 0.08D;  
 
                     double vecX = (backX * backSpeed) + (strafeX * strafeSpeed * this.strafeDirection);
                     double vecZ = (backZ * backSpeed) + (strafeZ * strafeSpeed * this.strafeDirection);
@@ -156,7 +158,6 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                 this.mob.stopUsingItem();
                 this.mob.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT);
                 if (this.mob.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.broadcastEntityEvent(this.mob, (byte) 4);
                     this.mob.doHurtTarget(serverLevel, target);
                 }
                 

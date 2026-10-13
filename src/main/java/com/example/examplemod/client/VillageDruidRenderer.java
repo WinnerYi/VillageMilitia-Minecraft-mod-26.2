@@ -3,17 +3,17 @@ package com.example.examplemod.client;
 import com.example.examplemod.ExampleMod;
 import com.example.examplemod.entity.VillageDruidEntity;
 
-import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.client.model.monster.illager.IllagerModel;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.client.renderer.entity.state.IllagerRenderState;
 import net.minecraft.resources.Identifier;
 
-public class VillageDruidRenderer extends HumanoidMobRenderer<
+public class VillageDruidRenderer extends MobRenderer<
     VillageDruidEntity,
     VillageDruidRenderer.MyRenderState,
-    VillageDruidModel
+    IllagerModel<VillageDruidRenderer.MyRenderState>
 > {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
         ExampleMod.MODID,
@@ -23,12 +23,12 @@ public class VillageDruidRenderer extends HumanoidMobRenderer<
     public VillageDruidRenderer(EntityRendererProvider.Context context) {
         super(
             context,
-            new VillageDruidModel(context.bakeLayer(ModelLayers.PLAYER)),
+            new VillageDruidModel(context.bakeLayer(ModelLayers.EVOKER)),
             0.5F
         );
     }
 
-    public static class MyRenderState extends HumanoidRenderState {
+    public static class MyRenderState extends IllagerRenderState {
         public boolean isCasting;
         public float castProgress;
         public int spellType;

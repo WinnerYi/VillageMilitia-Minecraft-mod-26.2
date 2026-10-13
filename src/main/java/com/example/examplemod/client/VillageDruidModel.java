@@ -1,12 +1,19 @@
 package com.example.examplemod.client;
 import net.minecraft.client.model.monster.illager.IllagerModel;
-import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
 
-public class VillageDruidModel extends HumanoidModel<VillageDruidRenderer.MyRenderState> {
+public class VillageDruidModel extends IllagerModel<VillageDruidRenderer.MyRenderState> {
+    private final ModelPart arms;
+    private final ModelPart rightArm;
+    private final ModelPart leftArm;
+
     public VillageDruidModel(ModelPart root) {
         super(root);
+        root.getChild("head").getChild("hat").visible = true;
+        this.arms = root.getChild("arms");
+        this.rightArm = root.getChild("right_arm");
+        this.leftArm = root.getChild("left_arm");
     }
 
     @Override
@@ -14,8 +21,15 @@ public class VillageDruidModel extends HumanoidModel<VillageDruidRenderer.MyRend
         super.setupAnim(state);
 
         if (!state.isCasting) {
+            this.arms.visible = true;
+            this.rightArm.visible = false;
+            this.leftArm.visible = false;
             return;
         }
+
+        this.arms.visible = false;
+        this.rightArm.visible = true;
+        this.leftArm.visible = true;
 
         float pulse = Mth.sin(state.castProgress * Mth.PI);
 
