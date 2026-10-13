@@ -407,11 +407,11 @@ public class DruidSpellGoal extends Goal {
 
     private int getCooldownTicks() {
         return switch (this.spellType) {
-            case THORN_BINDING -> ThreadLocalRandom.current().nextInt(40, 71);
-            case NATURE_BURST -> ThreadLocalRandom.current().nextInt(50, 81);
-            case ARCANE_RAY -> ThreadLocalRandom.current().nextInt(65, 96);
-            case POISON_BLOOM -> ThreadLocalRandom.current().nextInt(55, 86);
-            case HEALING_LIGHT -> ThreadLocalRandom.current().nextInt(140, 201);
+            case THORN_BINDING -> ThreadLocalRandom.current().nextInt(20, 36);
+            case NATURE_BURST -> ThreadLocalRandom.current().nextInt(25, 41);
+            case ARCANE_RAY -> ThreadLocalRandom.current().nextInt(33, 48);
+            case POISON_BLOOM -> ThreadLocalRandom.current().nextInt(28, 43);
+            case HEALING_LIGHT -> ThreadLocalRandom.current().nextInt(70, 101);
             case null -> 100;
         };
     }

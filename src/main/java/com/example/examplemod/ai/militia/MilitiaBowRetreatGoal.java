@@ -38,12 +38,14 @@ public class MilitiaBowRetreatGoal extends Goal {
 
     @Override
     public void start() {
+        this.mob.setAggressive(true);
         this.resetRandomParams();
         this.pathUpdateTimer = 0;
     }
 
     @Override
     public void stop() {
+        this.mob.setAggressive(false);
         this.mob.stopUsingItem();
         this.mob.getNavigation().stop();
         this.cooldownTicks = 0;
