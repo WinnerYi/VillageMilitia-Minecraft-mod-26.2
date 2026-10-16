@@ -2,5 +2,13 @@
   "item.village_militia.militia_spawn_egg": "民兵生怪蛋",
   "entity.village_militia.village_militia": "村民民兵",
   "item.village_militia.druid_spawn_egg": "德魯伊生怪蛋",
-  "entity.village_militia.village_druid": "村莊德魯伊"
+  "entity.village_militia.village_druid": "村莊德魯伊",
+  "container.village_militia.equipment": "民兵裝備",
+  "gui.village_militia.owner": "擁有者",
+  "gui.village_militia.no_owner": "無",
+  "gui.village_militia.mode": "模式",
+  "gui.village_militia.mode.idle": "閒置",
+  "gui.village_militia.mode.guard": "守衛",
+  "gui.village_militia.mode.follow": "跟隨",
+  "gui.village_militia.mode.patrol": "巡邏"
 }

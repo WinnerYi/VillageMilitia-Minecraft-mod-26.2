@@ -69,6 +69,14 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
         LivingEntity target = this.mob.getTarget();
         if (target == null) return;
 
+        if (this.mob.isShieldDisabled()) {
+            this.shieldTicks = 0;
+            if (this.mob.isUsingItem()
+                && this.mob.getUsedItemHand() == InteractionHand.OFF_HAND) {
+                this.mob.stopUsingItem();
+            }
+        }
+
         // 1. 視線鎖定（眼睛盯著怪）
         this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
@@ -122,7 +130,10 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                 }
 
                
-                if (this.retreatTicks <= 3 && !this.mob.isUsingItem() && this.mob.getOffhandItem().is(Items.SHIELD)) {
+                if (this.retreatTicks <= 3
+                    && !this.mob.isShieldDisabled()
+                    && !this.mob.isUsingItem()
+                    && this.mob.getOffhandItem().is(Items.SHIELD)) {
                     this.mob.startUsingItem(InteractionHand.OFF_HAND);
                     this.shieldTicks = 10 + this.mob.getRandom().nextInt(20);; 
                 }
@@ -145,6 +156,16 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
             }
 
         } else {
+            if (!this.mob.isUsingItem()
+                && !this.mob.isShieldDisabled()
+                && this.mob.getOffhandItem().is(Items.SHIELD)
+                && distanceSq > attackReach
+                && this.mob.getRandom().nextInt(40) == 0) {
+                this.mob.startUsingItem(InteractionHand.OFF_HAND);
+                this.shieldTicks = 8 + this.mob.getRandom().nextInt(13);
+                return;
+            }
+
             if (isRiding) {
                 net.minecraft.world.entity.PathfinderMob vehicleMob = (net.minecraft.world.entity.PathfinderMob) this.mob.getVehicle();
                 vehicleMob.getNavigation().moveTo(target, 1.9D);
@@ -164,13 +185,13 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                 ItemStack mainHand = this.mob.getMainHandItem();
 
                 if (mainHand.is(ItemTags.SWORDS)) {
-                    this.attackCooldown = 13; 
+                    this.attackCooldown = 14; 
                 } else if (mainHand.is(ItemTags.AXES)) {
                     this.attackCooldown = 26; 
                 } else if (mainHand.has(DataComponents.WEAPON)) {
                     this.attackCooldown = 20; // 預設 1 秒
                 } else {
-                    this.attackCooldown = 12;
+                    this.attackCooldown = 13;
                 }
                 
 
@@ -181,7 +202,8 @@ public class MilitiaSwordAndShieldAttackGoal extends Goal {
                         this.shieldTicks = 0;
                     } else {
                         // 戰術 B
-                        if (this.mob.getOffhandItem().is(Items.SHIELD)) {
+                        if (!this.mob.isShieldDisabled()
+                            && this.mob.getOffhandItem().is(Items.SHIELD)) {
                             this.mob.startUsingItem(InteractionHand.OFF_HAND);
                             this.shieldTicks = 20; // 舉盾 1 秒
                         }
