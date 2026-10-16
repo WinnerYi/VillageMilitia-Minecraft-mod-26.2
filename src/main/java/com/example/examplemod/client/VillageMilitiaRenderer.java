@@ -228,7 +228,7 @@ public class VillageMilitiaRenderer extends MobRenderer<
                     state.rightArmPose = HumanoidModel.ArmPose.EMPTY;
                 }
 
-                if (state.isUsingItem && state.useItemHand == net.minecraft.world.InteractionHand.OFF_HAND) {
+                if (state.isBlocking) {
                     state.leftArmPose = HumanoidModel.ArmPose.BLOCK;
                 } else {
                     state.leftArmPose = HumanoidModel.ArmPose.EMPTY;

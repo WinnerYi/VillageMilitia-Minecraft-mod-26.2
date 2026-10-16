@@ -26,6 +26,11 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.minecraft.world.inventory.MenuType;
+import com.example.examplemod.menu.MilitiaEquipmentMenu;
+import com.example.examplemod.client.MilitiaEquipmentScreen;
 
 @Mod("village_militia")
 public class ExampleMod {
@@ -35,6 +40,9 @@ public class ExampleMod {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, MODID);
+    public static final DeferredHolder<MenuType<?>, MenuType<MilitiaEquipmentMenu>> MILITIA_EQUIPMENT_MENU =
+        MENUS.register("militia_equipment", () -> MilitiaEquipmentMenu.TYPE);
 
     public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock("example_block", p -> p.mapColor(MapColor.STONE));
     public static final DeferredItem<BlockItem> EXAMPLE_BLOCK_ITEM = ITEMS.registerSimpleBlockItem("example_block", EXAMPLE_BLOCK);
@@ -63,12 +71,14 @@ public class ExampleMod {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
+        MENUS.register(modEventBus);
 
         ModEntities.ENTITY_TYPES.register(modEventBus);
     
         modEventBus.addListener(this::registerEntityAttributes);
         modEventBus.addListener(this::registerSpawnPlacements);
         modEventBus.addListener(this::registerRenderers);
+        modEventBus.addListener(this::registerMenuScreens);
 
         NeoForge.EVENT_BUS.register(this);
 
@@ -118,6 +128,10 @@ public class ExampleMod {
     private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.VILLAGE_MILITIA.get(), com.example.examplemod.client.VillageMilitiaRenderer::new);
         event.registerEntityRenderer(ModEntities.VILLAGE_DRUID.get(), com.example.examplemod.client.VillageDruidRenderer::new);
+    }
+
+    private void registerMenuScreens(RegisterMenuScreensEvent event) {
+        event.register(MILITIA_EQUIPMENT_MENU.get(), MilitiaEquipmentScreen::new);
     }
 
 

@@ -2,5 +2,13 @@
   "item.village_militia.militia_spawn_egg": "Village Militia Spawn Egg",
   "entity.village_militia.village_militia": "Village Militia",
   "item.village_militia.druid_spawn_egg": "Druid Spawn Egg",
-  "entity.village_militia.village_druid": "Village Druid"
+  "entity.village_militia.village_druid": "Village Druid",
+  "container.village_militia.equipment": "Militia Equipment",
+  "gui.village_militia.owner": "Owner",
+  "gui.village_militia.no_owner": "None",
+  "gui.village_militia.mode": "Mode",
+  "gui.village_militia.mode.idle": "Idle",
+  "gui.village_militia.mode.guard": "Guard",
+  "gui.village_militia.mode.follow": "Follow",
+  "gui.village_militia.mode.patrol": "Patrol"
 }

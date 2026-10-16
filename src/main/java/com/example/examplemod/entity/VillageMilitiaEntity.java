@@ -28,6 +28,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.CrossbowAttackMob;
 import net.minecraft.world.entity.monster.illager.Pillager;
+import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.animal.golem.SnowGolem;
 
 import net.minecraft.world.entity.animal.golem.IronGolem;
@@ -37,7 +38,9 @@ import net.minecraft.world.entity.npc.InventoryCarrier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ShieldItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.BlocksAttacks;
+import net.minecraft.tags.ItemTags;
 
 import com.example.examplemod.ai.militia.MilitiaFollowOwnerGoal;
 import com.example.examplemod.ai.militia.MilitiaSwordAndShieldAttackGoal;
@@ -61,16 +64,24 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import com.example.examplemod.menu.MilitiaEquipmentMenu;
+import net.neoforged.neoforge.common.extensions.IMenuProviderExtension;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.world.MenuProvider;
 
 
 
 public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttackMob, InventoryCarrier{
+    private static final int SHIELD_DISABLED_MIN_TICKS = 100;
     private final SimpleContainer inventory = new SimpleContainer(5);
     private int celebrateTicks = 0;
     private BlockPos guardPos = null;
     private boolean militiaSwinging;
     private int militiaSwingTime;
     private InteractionHand militiaSwingingArm;
+    private int shieldDisabledTicks;
 
     public boolean isMilitiaSwinging() {
         return this.militiaSwinging;
@@ -82,6 +93,10 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
 
     public int getMilitiaSwingDuration() {
         return 6;
+    }
+
+    public boolean isShieldDisabled() {
+        return this.shieldDisabledTicks > 0;
     }
 
     public enum MilitiaMode {
@@ -379,6 +394,39 @@ public class VillageMilitiaEntity extends PathfinderMob implements CrossbowAttac
         return wasHurt;
     }
 
+    @Override
+    protected void blockUsingItem(
+        ServerLevel level,
+        LivingEntity attacker,
+        DamageSource source,
+        float damage,
+        boolean fullyBlocked
+    ) {
+        super.blockUsingItem(level, attacker, source, damage, fullyBlocked);
+
+        ItemStack blockingItem = this.getItemBlockingWith();
+        BlocksAttacks blocksAttacks = blockingItem != null
+            ? blockingItem.get(DataComponents.BLOCKS_ATTACKS)
+            : null;
+        boolean isAxeAttack = attacker.getMainHandItem().is(ItemTags.AXES);
+        boolean isRavagerAttack = attacker instanceof Ravager;
+        float secondsToDisableBlocking = isRavagerAttack
+            ? 5.0F
+            : attacker.getSecondsToDisableBlocking();
+        if ((isAxeAttack || isRavagerAttack)
+            && secondsToDisableBlocking > 0.0F
+            && blocksAttacks != null) {
+            blocksAttacks.disable(level, this, secondsToDisableBlocking, blockingItem);
+            this.shieldDisabledTicks = Math.max(
+                this.shieldDisabledTicks,
+                Math.max(
+                    SHIELD_DISABLED_MIN_TICKS,
+                    (int) Math.ceil(secondsToDisableBlocking * 20.0F)
+                )
+            );
+        }
+    }
+
 
 @Override
 public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
@@ -391,11 +439,15 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
 
    
     if (player.isShiftKeyDown()) {
+        Player owner = this.getOwner();
+        if (owner != null && owner != player) {
+            return InteractionResult.PASS;
+        }
 
         // --- Client 端處理 ---
         if (this.level().isClientSide()) {
-            
-            if (!itemInHand.isEmpty() || this.isPassenger()) {
+
+            if (itemInHand.is(Items.EMERALD) || this.isPassenger()) {
                 return InteractionResult.SUCCESS_SERVER;
             }
             return InteractionResult.PASS;
@@ -450,71 +502,6 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             }
 
        
-            if (itemInHand.is(Items.STICK)) {
-                boolean dropAny = false;
-
-                for (EquipmentSlot slot : EquipmentSlot.values()) {
-                    ItemStack currentEquipped = this.getItemBySlot(slot);
-                    if (!currentEquipped.isEmpty()) {
-                        this.spawnAtLocation(serverLevel, currentEquipped.copy());
-                        this.setItemSlot(slot, ItemStack.EMPTY);
-                        dropAny = true;
-                    }
-                }
-
-                if (dropAny) {
-                    serverLevel.playSound(
-                        null, this.getX(), this.getY(), this.getZ(), 
-                        net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC.value(), 
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F
-                    );
-                    player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
-                    return InteractionResult.SUCCESS_SERVER;
-                }
-            } 
-
-        
-            else if (!itemInHand.isEmpty()) {
-                EquipmentSlot slotToEquip = null;
-
-                if (itemInHand.getItem() instanceof ShieldItem) {
-                    slotToEquip = EquipmentSlot.OFFHAND;
-                } 
-                else if (itemInHand.has(net.minecraft.core.component.DataComponents.EQUIPPABLE)) {
-                    var equippable = itemInHand.get(net.minecraft.core.component.DataComponents.EQUIPPABLE);
-                    if (equippable != null) {
-                        slotToEquip = equippable.slot();
-                    }
-                }
-                else if (itemInHand.isDamageableItem() || itemInHand.getItem() instanceof net.minecraft.world.item.CrossbowItem) {
-                    slotToEquip = EquipmentSlot.MAINHAND;
-                }
-
-                if (slotToEquip != null) {
-                    ItemStack currentEquipped = this.getItemBySlot(slotToEquip);
-
-                    if (!currentEquipped.isEmpty()) {
-                        this.spawnAtLocation(serverLevel, currentEquipped.copy());
-                    }
-
-                    ItemStack newEquip = itemInHand.copy();
-                    newEquip.setCount(1);
-                    this.setItemSlot(slotToEquip, newEquip);
-
-                    if (!player.getAbilities().instabuild) {
-                        itemInHand.shrink(1);
-                    }
-
-                    serverLevel.playSound(
-                        null, this.getX(), this.getY(), this.getZ(), 
-                        net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON, 
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F
-                    );
-                    player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
-                    return InteractionResult.SUCCESS_SERVER;
-                }
-            }
-
             if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().isEmpty() && player.getOffhandItem().isEmpty()) {
                 if (this.isPassenger()) {
                     this.stopRiding();
@@ -524,6 +511,36 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
             }
         }
     }
+
+        if (hand == InteractionHand.MAIN_HAND && itemInHand.isEmpty() && player.getOffhandItem().isEmpty() && !player.isShiftKeyDown()
+            && player instanceof ServerPlayer serverPlayer) {
+            Player owner = this.getOwner();
+            if (owner != null && owner != player) {
+                return InteractionResult.PASS;
+            }
+
+            class MilitiaMenuProvider implements MenuProvider, IMenuProviderExtension {
+                @Override
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(
+                    int containerId, net.minecraft.world.entity.player.Inventory playerInventory, Player menuPlayer) {
+                    return new MilitiaEquipmentMenu(containerId, playerInventory, VillageMilitiaEntity.this);
+                }
+
+                @Override
+                public Component getDisplayName() {
+                    return Component.translatable("container.village_militia.equipment");
+                }
+
+                @Override
+                public void writeClientSideData(net.minecraft.world.inventory.AbstractContainerMenu menu,
+                                                RegistryFriendlyByteBuf buffer) {
+                    buffer.writeVarInt(VillageMilitiaEntity.this.getId());
+                }
+            }
+            MenuProvider menuProvider = new MilitiaMenuProvider();
+            serverPlayer.openMenu(menuProvider);
+            return InteractionResult.SUCCESS_SERVER;
+        }
 
         return super.interact(player, hand, location);
     }
@@ -551,6 +568,9 @@ public InteractionResult interact(Player player, InteractionHand hand, Vec3 loca
                 if (this.isUsingItem() && this.getUsedItemHand() == net.minecraft.world.InteractionHand.OFF_HAND) {
                     this.stopUsingItem();
                 }
+            }
+            if (this.shieldDisabledTicks > 0) {
+                this.shieldDisabledTicks--;
             }
 
             // 【重裝戰馬騎乘與卸載邏輯】
